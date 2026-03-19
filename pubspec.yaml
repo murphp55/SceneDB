@@ -1,0 +1,35 @@
+name: scenedb
+description: "A cross-platform TV show & movie tracker."
+publish_to: 'none'
+
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.5.0
+
+dependencies:
+  flutter:
+    sdk: flutter
+
+  cupertino_icons: ^1.0.8
+  flutter_riverpod: ^2.5.1
+  riverpod_annotation: ^2.3.5
+  go_router: ^14.2.0
+  drift: ^2.20.3
+  drift_flutter: ^0.2.2
+  dio: ^5.7.0
+  cached_network_image: ^3.4.1
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+
+  flutter_lints: ^6.0.0
+  build_runner: ^2.4.12
+  drift_dev: ^2.20.3
+  riverpod_generator: ^2.4.3
+  custom_lint: ^0.7.0
+  riverpod_lint: ^2.3.13
+
+flutter:
+  uses-material-design: true
