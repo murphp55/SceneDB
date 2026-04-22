@@ -1,11 +1,20 @@
 /// TMDB API configuration.
-/// Replace [apiKey] with your actual TMDB API key from https://www.themoviedb.org/settings/api
+///
+/// The API key is supplied at build/run time via `--dart-define`, so it is
+/// never committed to source control. For example:
+///
+///     flutter run --dart-define=TMDB_API_KEY=your_key_here
+///     flutter build apk --dart-define=TMDB_API_KEY=your_key_here
+///
+/// Get a free key at https://www.themoviedb.org/settings/api
 class TmdbConfig {
   TmdbConfig._();
 
-  // TODO: Replace this placeholder with your real TMDB API key.
-  // Sign up at https://www.themoviedb.org/settings/api to get one for free.
-  static const String apiKey = 'YOUR_TMDB_API_KEY';
+  /// Populated from `--dart-define=TMDB_API_KEY=...`. Empty string if not set.
+  static const String apiKey = String.fromEnvironment('TMDB_API_KEY');
+
+  /// Whether a TMDB API key has been supplied via `--dart-define`.
+  static bool get hasApiKey => apiKey.isNotEmpty;
 
   static const String baseUrl = 'https://api.themoviedb.org/3';
   static const String imageBaseUrl = 'https://image.tmdb.org/t/p/w500';

@@ -40,13 +40,13 @@ class SettingsScreen extends StatelessWidget {
                   leading: const Icon(Icons.key_outlined),
                   title: const Text('API Key Status'),
                   subtitle: Text(
-                    TmdbConfig.apiKey == 'YOUR_TMDB_API_KEY'
-                        ? 'Not configured — replace the placeholder in tmdb_constants.dart'
-                        : 'Configured',
+                    TmdbConfig.hasApiKey
+                        ? 'Configured'
+                        : 'Not configured — pass --dart-define=TMDB_API_KEY=... at run/build time',
                     style: TextStyle(
-                      color: TmdbConfig.apiKey == 'YOUR_TMDB_API_KEY'
-                          ? Theme.of(context).colorScheme.error
-                          : Colors.green,
+                      color: TmdbConfig.hasApiKey
+                          ? Colors.green
+                          : Theme.of(context).colorScheme.error,
                     ),
                   ),
                 ),

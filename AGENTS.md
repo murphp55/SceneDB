@@ -13,11 +13,11 @@ flutter pub get
 # 2. Generate code (Drift DB + Riverpod providers) — MUST run before building
 dart run build_runner build --delete-conflicting-outputs
 
-# 3. Set TMDB API key — see lib/constants/tmdb_constants.dart
-#    Replace 'YOUR_TMDB_API_KEY' with a real key from https://www.themoviedb.org/settings/api
+# 3. Get a TMDB API key from https://www.themoviedb.org/settings/api
+#    The key is passed at run/build time via --dart-define and never checked in.
 
 # 4. Run
-flutter run
+flutter run --dart-define=TMDB_API_KEY=your_key_here
 ```
 
 > **Note:** `database.g.dart`, `library_provider.g.dart`, and `tmdb_provider.g.dart` are all generated files. They do not exist in source control. Always run `build_runner` before running or analyzing the app.
@@ -221,7 +221,7 @@ Base URL: `https://api.themoviedb.org/3`
 Image URL: `https://image.tmdb.org/t/p/w500{posterPath}`
 Backdrop URL: `https://image.tmdb.org/t/p/w1280{backdropPath}`
 
-API key lives in `lib/constants/tmdb_constants.dart` as `TmdbConfig.apiKey`. It is sent as a query parameter `api_key` on every request by `TmdbService`.
+API key is read from the `TMDB_API_KEY` Dart environment variable (via `String.fromEnvironment` in `TmdbConfig.apiKey`) and must be passed as `--dart-define=TMDB_API_KEY=...` at run/build time. `TmdbConfig.hasApiKey` returns whether it was supplied. `TmdbService` sends it as the `api_key` query parameter on every request.
 
 All calls are in `lib/services/tmdb_service.dart` and use `Dio`. Responses are mapped to the model classes in `lib/models/`.
 
