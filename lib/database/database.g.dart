@@ -4,7 +4,7 @@ part of 'database.dart';
 
 // ignore_for_file: type=lint
 class $TrackedMoviesTable extends TrackedMovies
-    with TableInfo<$TrackedMoviesTable, TrackedMovy> {
+    with TableInfo<$TrackedMoviesTable, TrackedMovie> {
   @override
   final GeneratedDatabase attachedDatabase;
   final String? _alias;
@@ -87,7 +87,7 @@ class $TrackedMoviesTable extends TrackedMovies
   String get actualTableName => $name;
   static const String $name = 'tracked_movies';
   @override
-  VerificationContext validateIntegrity(Insertable<TrackedMovy> instance,
+  VerificationContext validateIntegrity(Insertable<TrackedMovie> instance,
       {bool isInserting = false}) {
     final context = VerificationContext();
     final data = instance.toColumns(true);
@@ -126,9 +126,9 @@ class $TrackedMoviesTable extends TrackedMovies
   @override
   Set<GeneratedColumn> get $primaryKey => {id};
   @override
-  TrackedMovy map(Map<String, dynamic> data, {String? tablePrefix}) {
+  TrackedMovie map(Map<String, dynamic> data, {String? tablePrefix}) {
     final effectivePrefix = tablePrefix != null ? '$tablePrefix.' : '';
-    return TrackedMovy(
+    return TrackedMovie(
       id: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}id'])!,
       tmdbId: attachedDatabase.typeMapping
@@ -166,7 +166,7 @@ class $TrackedMoviesTable extends TrackedMovies
       const NullableLetterRatingConverter();
 }
 
-class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
+class TrackedMovie extends DataClass implements Insertable<TrackedMovie> {
   final int id;
   final int tmdbId;
   final String title;
@@ -176,7 +176,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
   final LetterRating? rating;
   final DateTime? watchedOn;
   final DateTime addedAt;
-  const TrackedMovy(
+  const TrackedMovie(
       {required this.id,
       required this.tmdbId,
       required this.title,
@@ -233,10 +233,10 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
     );
   }
 
-  factory TrackedMovy.fromJson(Map<String, dynamic> json,
+  factory TrackedMovie.fromJson(Map<String, dynamic> json,
       {ValueSerializer? serializer}) {
     serializer ??= driftRuntimeOptions.defaultSerializer;
-    return TrackedMovy(
+    return TrackedMovie(
       id: serializer.fromJson<int>(json['id']),
       tmdbId: serializer.fromJson<int>(json['tmdbId']),
       title: serializer.fromJson<String>(json['title']),
@@ -264,7 +264,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
     };
   }
 
-  TrackedMovy copyWith(
+  TrackedMovie copyWith(
           {int? id,
           int? tmdbId,
           String? title,
@@ -274,7 +274,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
           Value<LetterRating?> rating = const Value.absent(),
           Value<DateTime?> watchedOn = const Value.absent(),
           DateTime? addedAt}) =>
-      TrackedMovy(
+      TrackedMovie(
         id: id ?? this.id,
         tmdbId: tmdbId ?? this.tmdbId,
         title: title ?? this.title,
@@ -285,8 +285,8 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
         watchedOn: watchedOn.present ? watchedOn.value : this.watchedOn,
         addedAt: addedAt ?? this.addedAt,
       );
-  TrackedMovy copyWithCompanion(TrackedMoviesCompanion data) {
-    return TrackedMovy(
+  TrackedMovie copyWithCompanion(TrackedMoviesCompanion data) {
+    return TrackedMovie(
       id: data.id.present ? data.id.value : this.id,
       tmdbId: data.tmdbId.present ? data.tmdbId.value : this.tmdbId,
       title: data.title.present ? data.title.value : this.title,
@@ -302,7 +302,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
 
   @override
   String toString() {
-    return (StringBuffer('TrackedMovy(')
+    return (StringBuffer('TrackedMovie(')
           ..write('id: $id, ')
           ..write('tmdbId: $tmdbId, ')
           ..write('title: $title, ')
@@ -322,7 +322,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
-      (other is TrackedMovy &&
+      (other is TrackedMovie &&
           other.id == this.id &&
           other.tmdbId == this.tmdbId &&
           other.title == this.title &&
@@ -334,7 +334,7 @@ class TrackedMovy extends DataClass implements Insertable<TrackedMovy> {
           other.addedAt == this.addedAt);
 }
 
-class TrackedMoviesCompanion extends UpdateCompanion<TrackedMovy> {
+class TrackedMoviesCompanion extends UpdateCompanion<TrackedMovie> {
   final Value<int> id;
   final Value<int> tmdbId;
   final Value<String> title;
@@ -367,7 +367,7 @@ class TrackedMoviesCompanion extends UpdateCompanion<TrackedMovy> {
     this.addedAt = const Value.absent(),
   })  : tmdbId = Value(tmdbId),
         title = Value(title);
-  static Insertable<TrackedMovy> custom({
+  static Insertable<TrackedMovie> custom({
     Expression<int>? id,
     Expression<int>? tmdbId,
     Expression<String>? title,
@@ -1177,17 +1177,17 @@ class $$TrackedMoviesTableAnnotationComposer
 class $$TrackedMoviesTableTableManager extends RootTableManager<
     _$AppDatabase,
     $TrackedMoviesTable,
-    TrackedMovy,
+    TrackedMovie,
     $$TrackedMoviesTableFilterComposer,
     $$TrackedMoviesTableOrderingComposer,
     $$TrackedMoviesTableAnnotationComposer,
     $$TrackedMoviesTableCreateCompanionBuilder,
     $$TrackedMoviesTableUpdateCompanionBuilder,
     (
-      TrackedMovy,
-      BaseReferences<_$AppDatabase, $TrackedMoviesTable, TrackedMovy>
+      TrackedMovie,
+      BaseReferences<_$AppDatabase, $TrackedMoviesTable, TrackedMovie>
     ),
-    TrackedMovy,
+    TrackedMovie,
     PrefetchHooks Function()> {
   $$TrackedMoviesTableTableManager(_$AppDatabase db, $TrackedMoviesTable table)
       : super(TableManagerState(
@@ -1253,17 +1253,17 @@ class $$TrackedMoviesTableTableManager extends RootTableManager<
 typedef $$TrackedMoviesTableProcessedTableManager = ProcessedTableManager<
     _$AppDatabase,
     $TrackedMoviesTable,
-    TrackedMovy,
+    TrackedMovie,
     $$TrackedMoviesTableFilterComposer,
     $$TrackedMoviesTableOrderingComposer,
     $$TrackedMoviesTableAnnotationComposer,
     $$TrackedMoviesTableCreateCompanionBuilder,
     $$TrackedMoviesTableUpdateCompanionBuilder,
     (
-      TrackedMovy,
-      BaseReferences<_$AppDatabase, $TrackedMoviesTable, TrackedMovy>
+      TrackedMovie,
+      BaseReferences<_$AppDatabase, $TrackedMoviesTable, TrackedMovie>
     ),
-    TrackedMovy,
+    TrackedMovie,
     PrefetchHooks Function()>;
 typedef $$TrackedShowsTableCreateCompanionBuilder = TrackedShowsCompanion
     Function({
@@ -1540,3 +1540,4 @@ class $AppDatabaseManager {
   $$TrackedShowsTableTableManager get trackedShows =>
       $$TrackedShowsTableTableManager(_db, _db.trackedShows);
 }
+                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                             

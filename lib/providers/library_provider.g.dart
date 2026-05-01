@@ -7,12 +7,12 @@ part of 'library_provider.dart';
 // **************************************************************************
 
 String _$trackedMoviesStreamHash() =>
-    r'7360f3de3d626f9809fb95fcdfef4fbc5d82793c';
+    r'f9a2062bd8e4cc836b2b4b1500eecfb6ebbd285b';
 
 /// See also [trackedMoviesStream].
 @ProviderFor(trackedMoviesStream)
 final trackedMoviesStreamProvider =
-    AutoDisposeStreamProvider<List<TrackedMovy>>.internal(
+    AutoDisposeStreamProvider<List<TrackedMovie>>.internal(
   trackedMoviesStream,
   name: r'trackedMoviesStreamProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -25,13 +25,13 @@ final trackedMoviesStreamProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef TrackedMoviesStreamRef
-    = AutoDisposeStreamProviderRef<List<TrackedMovy>>;
-String _$filteredMoviesHash() => r'f4f312a68c48f632f7c1573f3edd893e2248bd27';
+    = AutoDisposeStreamProviderRef<List<TrackedMovie>>;
+String _$filteredMoviesHash() => r'97b23fe31c1f4d82cc7a54287f3587314652b231';
 
 /// See also [filteredMovies].
 @ProviderFor(filteredMovies)
 final filteredMoviesProvider =
-    AutoDisposeFutureProvider<List<TrackedMovy>>.internal(
+    AutoDisposeFutureProvider<List<TrackedMovie>>.internal(
   filteredMovies,
   name: r'filteredMoviesProvider',
   debugGetCreateSourceHash: const bool.fromEnvironment('dart.vm.product')
@@ -43,7 +43,7 @@ final filteredMoviesProvider =
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-typedef FilteredMoviesRef = AutoDisposeFutureProviderRef<List<TrackedMovy>>;
+typedef FilteredMoviesRef = AutoDisposeFutureProviderRef<List<TrackedMovie>>;
 String _$trackedShowsStreamHash() =>
     r'45fa614ec8dbe5cb0556e2938a2a2511175b85fb';
 
@@ -81,7 +81,7 @@ final filteredShowsProvider =
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
 typedef FilteredShowsRef = AutoDisposeFutureProviderRef<List<TrackedShow>>;
-String _$trackedMovieHash() => r'ada15399e3856a3c965500f5a4724fe6ce87f3e2';
+String _$trackedMovieHash() => r'dd1299e1b98f870ceea33b88620c8fbc185f63a4';
 
 /// Copied from Dart SDK
 class _SystemHash {
@@ -109,7 +109,7 @@ class _SystemHash {
 const trackedMovieProvider = TrackedMovieFamily();
 
 /// See also [trackedMovie].
-class TrackedMovieFamily extends Family<AsyncValue<TrackedMovy?>> {
+class TrackedMovieFamily extends Family<AsyncValue<TrackedMovie?>> {
   /// See also [trackedMovie].
   const TrackedMovieFamily();
 
@@ -147,7 +147,7 @@ class TrackedMovieFamily extends Family<AsyncValue<TrackedMovy?>> {
 }
 
 /// See also [trackedMovie].
-class TrackedMovieProvider extends AutoDisposeFutureProvider<TrackedMovy?> {
+class TrackedMovieProvider extends AutoDisposeFutureProvider<TrackedMovie?> {
   /// See also [trackedMovie].
   TrackedMovieProvider(
     int tmdbId,
@@ -182,7 +182,7 @@ class TrackedMovieProvider extends AutoDisposeFutureProvider<TrackedMovy?> {
 
   @override
   Override overrideWith(
-    FutureOr<TrackedMovy?> Function(TrackedMovieRef provider) create,
+    FutureOr<TrackedMovie?> Function(TrackedMovieRef provider) create,
   ) {
     return ProviderOverride(
       origin: this,
@@ -199,7 +199,7 @@ class TrackedMovieProvider extends AutoDisposeFutureProvider<TrackedMovy?> {
   }
 
   @override
-  AutoDisposeFutureProviderElement<TrackedMovy?> createElement() {
+  AutoDisposeFutureProviderElement<TrackedMovie?> createElement() {
     return _TrackedMovieProviderElement(this);
   }
 
@@ -219,13 +219,13 @@ class TrackedMovieProvider extends AutoDisposeFutureProvider<TrackedMovy?> {
 
 @Deprecated('Will be removed in 3.0. Use Ref instead')
 // ignore: unused_element
-mixin TrackedMovieRef on AutoDisposeFutureProviderRef<TrackedMovy?> {
+mixin TrackedMovieRef on AutoDisposeFutureProviderRef<TrackedMovie?> {
   /// The parameter `tmdbId` of this provider.
   int get tmdbId;
 }
 
 class _TrackedMovieProviderElement
-    extends AutoDisposeFutureProviderElement<TrackedMovy?>
+    extends AutoDisposeFutureProviderElement<TrackedMovie?>
     with TrackedMovieRef {
   _TrackedMovieProviderElement(super.provider);
 
@@ -432,3 +432,4 @@ final showLibraryNotifierProvider =
 typedef _$ShowLibraryNotifier = AutoDisposeNotifier<void>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+                                                                                                                                                                                                                                                                                                                                                                                                                                        

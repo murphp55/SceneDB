@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../constants/app_constants.dart';
 import '../../providers/library_provider.dart';
+import '../../widgets/empty_state.dart';
 import '../../widgets/rating_chip.dart';
 import '../../widgets/status_chip.dart';
 import '../../widgets/title_card.dart';
@@ -14,13 +15,34 @@ class MoviesLibraryTab extends ConsumerWidget {
   @override
   Widget build(BuildContext context, WidgetRef ref) {
     final moviesAsync = ref.watch(filteredMoviesProvider);
+    final filter = ref.watch(movieLibraryFilterProvider);
 
     return moviesAsync.when(
       loading: () => const Center(child: CircularProgressIndicator()),
-      error: (e, _) => Center(child: Text('Error: $e')),
+      error: (e, _) => EmptyState(
+        icon: Icons.error_outline,
+        title: 'Could not load your library.',
+        body: '$e',
+      ),
       data: (movies) {
         if (movies.isEmpty) {
-          return const _EmptyLibrary(type: 'movies');
+          if (filter.isActive) {
+            return EmptyState(
+              icon: Icons.filter_alt_off_outlined,
+              title: 'No movies match the current filters.',
+              body: 'Clear filters to see your full library.',
+              actionLabel: 'Clear filters',
+              onAction: () =>
+                  ref.read(movieLibraryFilterProvider.notifier).clear(),
+            );
+          }
+          return EmptyState(
+            icon: Icons.video_library_outlined,
+            title: 'Your movies library is empty.',
+            body: 'Browse and add titles to start tracking what you watch.',
+            actionLabel: 'Browse movies',
+            onAction: () => context.go('/browse/movies'),
+          );
         }
         return GridView.builder(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
@@ -87,36 +109,3 @@ class _MovieLibraryCard extends StatelessWidget {
   }
 }
 
-class _EmptyLibrary extends StatelessWidget {
-  const _EmptyLibrary({required this.type});
-
-  final String type;
-
-  @override
-  Widget build(BuildContext context) {
-    return Center(
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(
-            Icons.video_library_outlined,
-            size: 64,
-            color: Theme.of(context).colorScheme.onSurfaceVariant,
-          ),
-          const SizedBox(height: AppConstants.defaultPadding),
-          Text(
-            'No $type in your library yet.',
-            style: Theme.of(context).textTheme.bodyLarge,
-          ),
-          const SizedBox(height: AppConstants.smallPadding),
-          Text(
-            'Browse and add titles to get started.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
-          ),
-        ],
-      ),
-    );
-  }
-}

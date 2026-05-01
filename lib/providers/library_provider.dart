@@ -69,13 +69,13 @@ class ShowLibraryFilter extends _$ShowLibraryFilter {
 // ---------------------------------------------------------------------------
 
 @riverpod
-Stream<List<TrackedMovy>> trackedMoviesStream(Ref ref) {
+Stream<List<TrackedMovie>> trackedMoviesStream(Ref ref) {
   final db = ref.watch(databaseProvider);
   return db.watchAllMovies();
 }
 
 @riverpod
-Future<List<TrackedMovy>> filteredMovies(Ref ref) async {
+Future<List<TrackedMovie>> filteredMovies(Ref ref) async {
   final all = await ref.watch(trackedMoviesStreamProvider.future);
   final filter = ref.watch(movieLibraryFilterProvider);
 
@@ -205,7 +205,7 @@ class ShowLibraryNotifier extends _$ShowLibraryNotifier {
 // ---------------------------------------------------------------------------
 
 @riverpod
-Future<TrackedMovy?> trackedMovie(Ref ref, int tmdbId) {
+Future<TrackedMovie?> trackedMovie(Ref ref, int tmdbId) {
   final db = ref.watch(databaseProvider);
   return db.getMovieByTmdbId(tmdbId);
 }

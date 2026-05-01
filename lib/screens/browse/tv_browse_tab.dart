@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/app_constants.dart';
+import '../../models/tmdb_tv.dart';
 import '../../providers/tmdb_provider.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_view.dart';
 import '../../widgets/search_bar_widget.dart';
 import '../../widgets/title_card.dart';
 import '../../widgets/trending_row.dart';
@@ -28,17 +31,19 @@ class TvBrowseTab extends ConsumerWidget {
         Expanded(
           child: query.trim().isEmpty
               ? _buildDiscovery(context, trending, topRated)
-              : _buildSearchResults(context, searchResults),
+              : _buildSearchResults(context, ref, searchResults),
         ),
       ],
     );
   }
 
-  Widget _buildDiscovery(BuildContext context, AsyncValue trendingAsync,
-      AsyncValue topRatedAsync) {
+  Widget _buildDiscovery(
+      BuildContext context,
+      AsyncValue<List<TmdbTv>> trendingAsync,
+      AsyncValue<List<TmdbTv>> topRatedAsync) {
     return ListView(
       children: [
-        TrendingRowBuilder.movies(
+        TrendingRowBuilder.tv(
           title: 'Trending This Week',
           isLoading: trendingAsync.isLoading,
           error: trendingAsync.error,
@@ -47,11 +52,12 @@ class TvBrowseTab extends ConsumerWidget {
                         name: t.name,
                         posterPath: t.posterPath,
                         onTap: () => context.push('/show/${t.id}'),
+                        genreIds: t.genreIds,
                       ))
                   .toList() ??
               [],
         ),
-        TrendingRowBuilder.movies(
+        TrendingRowBuilder.tv(
           title: 'Top Rated',
           isLoading: topRatedAsync.isLoading,
           error: topRatedAsync.error,
@@ -60,6 +66,7 @@ class TvBrowseTab extends ConsumerWidget {
                         name: t.name,
                         posterPath: t.posterPath,
                         onTap: () => context.push('/show/${t.id}'),
+                        genreIds: t.genreIds,
                       ))
                   .toList() ??
               [],
@@ -69,16 +76,24 @@ class TvBrowseTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchResults(BuildContext context, AsyncValue searchAsync) {
+  Widget _buildSearchResults(BuildContext context, WidgetRef ref,
+      AsyncValue<List<TmdbTv>> searchAsync) {
     if (searchAsync.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (searchAsync.hasError) {
-      return Center(child: Text('Error: ${searchAsync.error}'));
+      return ErrorView(
+        error: searchAsync.error,
+        onRetry: () => ref.invalidate(tvSearchResultsProvider),
+      );
     }
     final results = searchAsync.valueOrNull ?? [];
     if (results.isEmpty) {
-      return const Center(child: Text('No results found.'));
+      return const EmptyState(
+        icon: Icons.tv_off_outlined,
+        title: 'No TV shows match that search.',
+        body: 'Try a different title or check the spelling.',
+      );
     }
     return GridView.builder(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
@@ -93,12 +108,4 @@ class TvBrowseTab extends ConsumerWidget {
         final show = results[index];
         return TitleCard(
           title: show.name,
-          posterPath: show.posterPath,
-          onTap: () => context.push('/show/${show.id}'),
-          width: double.infinity,
-          height: 140,
-        );
-      },
-    );
-  }
-}
+        

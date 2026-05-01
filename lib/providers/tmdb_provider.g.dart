@@ -6,9 +6,12 @@ part of 'tmdb_provider.dart';
 // RiverpodGenerator
 // **************************************************************************
 
-String _$tmdbServiceHash() => r'f2aa9443c920a49677ce7e1f2bf6e1a728e09fa8';
+String _$tmdbServiceHash() => r'f17e985dabeee0948b696a4c3b6e9916f9d1eb91';
 
-/// See also [tmdbService].
+/// Rebuilds whenever the resolved API key changes. Dependent providers
+/// (trending, search, detail, etc.) automatically invalidate and refetch.
+///
+/// Copied from [tmdbService].
 @ProviderFor(tmdbService)
 final tmdbServiceProvider = AutoDisposeProvider<TmdbService>.internal(
   tmdbService,
@@ -473,3 +476,4 @@ final tvSearchQueryProvider =
 typedef _$TvSearchQuery = AutoDisposeNotifier<String>;
 // ignore_for_file: type=lint
 // ignore_for_file: subtype_of_sealed_class, invalid_use_of_internal_member, invalid_use_of_visible_for_testing_member, deprecated_member_use_from_same_package
+                                                                                                                                                                                                                                                                                                                                 

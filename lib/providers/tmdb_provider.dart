@@ -5,6 +5,7 @@ import '../models/tmdb_genre.dart';
 import '../models/tmdb_movie.dart';
 import '../models/tmdb_tv.dart';
 import '../services/tmdb_service.dart';
+import 'api_key_provider.dart';
 
 part 'tmdb_provider.g.dart';
 
@@ -12,8 +13,13 @@ part 'tmdb_provider.g.dart';
 // Service provider
 // ---------------------------------------------------------------------------
 
+/// Rebuilds whenever the resolved API key changes. Dependent providers
+/// (trending, search, detail, etc.) automatically invalidate and refetch.
 @riverpod
-TmdbService tmdbService(Ref ref) => TmdbService();
+TmdbService tmdbService(Ref ref) {
+  final keyState = ref.watch(apiKeyProvider).valueOrNull;
+  return TmdbService(apiKey: keyState?.key ?? '');
+}
 
 // ---------------------------------------------------------------------------
 // Movie providers

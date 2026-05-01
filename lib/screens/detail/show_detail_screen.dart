@@ -4,10 +4,12 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../constants/app_constants.dart';
 import '../../constants/tmdb_constants.dart';
+import '../../database/database.dart';
 import '../../models/enums.dart';
 import '../../providers/library_provider.dart';
 import '../../providers/tmdb_provider.dart';
 import '../../widgets/add_to_library_sheet.dart';
+import '../../widgets/error_view.dart';
 import '../../widgets/genre_chip.dart';
 import '../../widgets/rating_chip.dart';
 import '../../widgets/status_chip.dart';
@@ -25,7 +27,10 @@ class ShowDetailScreen extends ConsumerWidget {
     return Scaffold(
       body: showAsync.when(
         loading: () => const Center(child: CircularProgressIndicator()),
-        error: (e, _) => Center(child: Text('Error: $e')),
+        error: (e, _) => ErrorView(
+          error: e,
+          onRetry: () => ref.invalidate(tvDetailProvider(tmdbId)),
+        ),
         data: (show) {
           return CustomScrollView(
             slivers: [
@@ -149,7 +154,7 @@ class ShowDetailScreen extends ConsumerWidget {
   Widget _buildLibrarySection(
     BuildContext context,
     WidgetRef ref,
-    dynamic tracked,
+    TrackedShow tracked,
     String title,
     String? posterPath,
     List<String> genres,
@@ -168,7 +173,7 @@ class ShowDetailScreen extends ConsumerWidget {
           runSpacing: 4,
           children: [
             StatusChip(status: tracked.status),
-            if (tracked.rating != null) RatingChip(rating: tracked.rating),
+            if (tracked.rating != null) RatingChip(rating: tracked.rating!),
           ],
         ),
         if (tracked.currentSeason != null || tracked.currentEpisode != null) ...[
@@ -255,7 +260,7 @@ class ShowDetailScreen extends ConsumerWidget {
     );
   }
 
-  void _openEditSheet(BuildContext context, WidgetRef ref, dynamic tracked,
+  void _openEditSheet(BuildContext context, WidgetRef ref, TrackedShow tracked,
       String title, String? posterPath, List<String> genres) {
     showModalBottomSheet(
       context: context,

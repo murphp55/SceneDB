@@ -3,7 +3,10 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/app_constants.dart';
+import '../../models/tmdb_movie.dart';
 import '../../providers/tmdb_provider.dart';
+import '../../widgets/empty_state.dart';
+import '../../widgets/error_view.dart';
 import '../../widgets/search_bar_widget.dart';
 import '../../widgets/title_card.dart';
 import '../../widgets/trending_row.dart';
@@ -28,14 +31,16 @@ class MoviesBrowseTab extends ConsumerWidget {
         Expanded(
           child: query.trim().isEmpty
               ? _buildDiscovery(context, trending, topRated)
-              : _buildSearchResults(context, searchResults),
+              : _buildSearchResults(context, ref, searchResults),
         ),
       ],
     );
   }
 
-  Widget _buildDiscovery(BuildContext context, AsyncValue trendingAsync,
-      AsyncValue topRatedAsync) {
+  Widget _buildDiscovery(
+      BuildContext context,
+      AsyncValue<List<TmdbMovie>> trendingAsync,
+      AsyncValue<List<TmdbMovie>> topRatedAsync) {
     return ListView(
       children: [
         TrendingRowBuilder.movies(
@@ -47,6 +52,7 @@ class MoviesBrowseTab extends ConsumerWidget {
                         name: m.title,
                         posterPath: m.posterPath,
                         onTap: () => context.push('/movie/${m.id}'),
+                        genreIds: m.genreIds,
                       ))
                   .toList() ??
               [],
@@ -60,6 +66,7 @@ class MoviesBrowseTab extends ConsumerWidget {
                         name: m.title,
                         posterPath: m.posterPath,
                         onTap: () => context.push('/movie/${m.id}'),
+                        genreIds: m.genreIds,
                       ))
                   .toList() ??
               [],
@@ -69,18 +76,24 @@ class MoviesBrowseTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchResults(BuildContext context, AsyncValue searchAsync) {
+  Widget _buildSearchResults(BuildContext context, WidgetRef ref,
+      AsyncValue<List<TmdbMovie>> searchAsync) {
     if (searchAsync.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
     if (searchAsync.hasError) {
-      return Center(
-        child: Text('Error: ${searchAsync.error}'),
+      return ErrorView(
+        error: searchAsync.error,
+        onRetry: () => ref.invalidate(movieSearchResultsProvider),
       );
     }
     final results = searchAsync.valueOrNull ?? [];
     if (results.isEmpty) {
-      return const Center(child: Text('No results found.'));
+      return const EmptyState(
+        icon: Icons.movie_filter_outlined,
+        title: 'No movies match that search.',
+        body: 'Try a different title or check the spelling.',
+      );
     }
     return GridView.builder(
       padding: const EdgeInsets.all(AppConstants.defaultPadding),
@@ -94,13 +107,4 @@ class MoviesBrowseTab extends ConsumerWidget {
       itemBuilder: (context, index) {
         final movie = results[index];
         return TitleCard(
-          title: movie.title,
-          posterPath: movie.posterPath,
-          onTap: () => context.push('/movie/${movie.id}'),
-          width: double.infinity,
-          height: 140,
-        );
-      },
-    );
-  }
-}
+          title: movie.title,

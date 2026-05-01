@@ -1,20 +1,22 @@
 /// TMDB API configuration.
 ///
-/// The API key is supplied at build/run time via `--dart-define`, so it is
-/// never committed to source control. For example:
+/// The API key can be supplied two ways:
+///   1. Stored in-app via the Settings screen (persisted with
+///      `flutter_secure_storage`). This is the preferred path for end users.
+///   2. As a build-time fallback via `--dart-define=TMDB_API_KEY=...`. Useful
+///      for development and CI.
 ///
-///     flutter run --dart-define=TMDB_API_KEY=your_key_here
-///     flutter build apk --dart-define=TMDB_API_KEY=your_key_here
+/// At runtime, the stored key wins if present; otherwise the dart-define is
+/// used. See `apiKeyProvider` for the resolved value.
 ///
 /// Get a free key at https://www.themoviedb.org/settings/api
 class TmdbConfig {
   TmdbConfig._();
 
-  /// Populated from `--dart-define=TMDB_API_KEY=...`. Empty string if not set.
-  static const String apiKey = String.fromEnvironment('TMDB_API_KEY');
-
-  /// Whether a TMDB API key has been supplied via `--dart-define`.
-  static bool get hasApiKey => apiKey.isNotEmpty;
+  /// Build-time fallback key from `--dart-define=TMDB_API_KEY=...`. Empty
+  /// string if not set. Prefer reading the resolved key via `apiKeyProvider`.
+  static const String dartDefineApiKey =
+      String.fromEnvironment('TMDB_API_KEY');
 
   static const String baseUrl = 'https://api.themoviedb.org/3';
   static const String imageBaseUrl = 'https://image.tmdb.org/t/p/w500';

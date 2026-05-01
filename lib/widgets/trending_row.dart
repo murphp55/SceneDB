@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
+import '../services/tmdb_error.dart';
 import 'title_card.dart';
 
 class TrendingRow extends StatelessWidget {
@@ -37,11 +38,21 @@ class TrendingRow extends StatelessWidget {
           ),
         ),
         SizedBox(
-          height: 220,
+          height: 270,
           child: isLoading
               ? const Center(child: CircularProgressIndicator())
               : error != null
-                  ? Center(child: Text('Failed to load', style: TextStyle(color: Theme.of(context).colorScheme.error)))
+                  ? Center(
+                      child: Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 24),
+                        child: Text(
+                          _errorMessageFor(error!),
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                              color: Theme.of(context).colorScheme.error),
+                        ),
+                      ),
+                    )
                   : ListView.separated(
                       scrollDirection: Axis.horizontal,
                       padding: const EdgeInsets.symmetric(
@@ -56,6 +67,8 @@ class TrendingRow extends StatelessWidget {
                           title: item.title,
                           posterPath: item.posterPath,
                           onTap: item.onTap,
+                          genreIds: item.genreIds,
+                          isTv: item.isTv,
                         );
                       },
                     ),
@@ -65,37 +78,76 @@ class TrendingRow extends StatelessWidget {
   }
 }
 
+String _errorMessageFor(Object error) {
+  if (error is TmdbError) return error.userMessage;
+  return 'Failed to load.';
+}
+
 class TrendingItem {
   const TrendingItem({
     required this.title,
     this.posterPath,
     this.onTap,
+    this.genreIds,
+    this.isTv = false,
   });
 
   final String title;
   final String? posterPath;
   final VoidCallback? onTap;
+  final List<int>? genreIds;
+  final bool isTv;
 }
 
 /// Factory helper to build [TrendingRow] from typed data.
 class TrendingRowBuilder {
   static TrendingRow movies({
     required String title,
-    required List<({String name, String? posterPath, VoidCallback? onTap})> items,
+    required List<
+            ({
+              String name,
+              String? posterPath,
+              VoidCallback? onTap,
+              List<int>? genreIds
+            })>
+        items,
     required bool isLoading,
     Object? error,
   }) {
-    return TrendingRow(
+    return _build(
       title: title,
+      items: items,
       isLoading: isLoading,
       error: error,
-      items: items
-          .map((e) => TrendingItem(
-                title: e.name,
-                posterPath: e.posterPath,
-                onTap: e.onTap,
-              ))
-          .toList(),
+      isTv: false,
     );
   }
-}
+
+  static TrendingRow tv({
+    required String title,
+    required List<
+            ({
+              String name,
+              String? posterPath,
+              VoidCallback? onTap,
+              List<int>? genreIds
+            })>
+        items,
+    required bool isLoading,
+    Object? error,
+  }) {
+    return _build(
+      title: title,
+      items: items,
+      isLoading: isLoading,
+      error: error,
+      isTv: true,
+    );
+  }
+
+  static TrendingRow _build({
+    required String title,
+    required List<
+            ({
+              String name,
+        

@@ -10,6 +10,7 @@ part 'database.g.dart';
 // Tables
 // ---------------------------------------------------------------------------
 
+@DataClassName('TrackedMovie')
 class TrackedMovies extends Table {
   IntColumn get id => integer().autoIncrement()();
   IntColumn get tmdbId => integer().unique()();
@@ -50,8 +51,43 @@ class TrackedShows extends Table {
 class AppDatabase extends _$AppDatabase {
   AppDatabase() : super(_openConnection());
 
+  /// Bump this AND add a step to [migration]'s `onUpgrade` whenever the
+  /// schema changes. After bumping:
+  ///
+  ///   1. `dart run drift_dev schema dump lib/database/database.dart drift_schemas/`
+  ///      to capture a snapshot of the new version.
+  ///   2. `dart run drift_dev schema generate drift_schemas/ test/generated_migrations/`
+  ///      to regenerate test helpers.
+  ///   3. Update `test/migration_test.dart` with a test for the new step.
+  ///
+  /// See `drift_schemas/README.md` for the full workflow.
   @override
   int get schemaVersion => 1;
+
+  /// Migration strategy. Pattern for adding a step:
+  ///
+  ///   if (from == 1) {
+  ///     await m.addColumn(trackedMovies, trackedMovies.someNewColumn);
+  ///   }
+  ///   if (from == 2) {
+  ///     await m.createTable(someNewTable);
+  ///   }
+  ///
+  /// Use `from`-based ifs (not switch on `to`) so multi-step upgrades
+  /// chain correctly when a user skips versions.
+  @override
+  MigrationStrategy get migration => MigrationStrategy(
+        onCreate: (m) => m.createAll(),
+        onUpgrade: (m, from, to) async {
+          // No upgrade steps yet — schema is at v1.
+          // Future migrations go here, ordered by `from` version.
+        },
+        beforeOpen: (details) async {
+          // Enforce foreign keys. Drift defaults this off on SQLite; turning
+          // it on now means future FK columns behave correctly.
+          await customStatement('PRAGMA foreign_keys = ON');
+        },
+      );
 
   static QueryExecutor _openConnection() {
     return driftDatabase(name: 'scenedb');
@@ -59,13 +95,13 @@ class AppDatabase extends _$AppDatabase {
 
   // --- Movies ---
 
-  Stream<List<TrackedMovy>> watchAllMovies() =>
+  Stream<List<TrackedMovie>> watchAllMovies() =>
       select(trackedMovies).watch();
 
-  Future<List<TrackedMovy>> getAllMovies() =>
+  Future<List<TrackedMovie>> getAllMovies() =>
       select(trackedMovies).get();
 
-  Future<TrackedMovy?> getMovieByTmdbId(int tmdbId) {
+  Future<TrackedMovie?> getMovieByTmdbId(int tmdbId) {
     return (select(trackedMovies)
           ..where((t) => t.tmdbId.equals(tmdbId)))
         .getSingleOrNull();
