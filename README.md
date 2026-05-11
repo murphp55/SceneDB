@@ -56,23 +56,31 @@ lib/
 │   ├── database.g.dart      # Generated Drift code (do not edit)
 │   └── converters.dart      # Type converters for enums
 ├── services/
-│   └── tmdb_service.dart    # TMDB API communication
+│   ├── tmdb_service.dart    # TMDB API communication (Dio)
+│   ├── tmdb_error.dart      # Typed TmdbError hierarchy (401, 429, timeouts, etc.)
+│   └── api_key_service.dart # flutter_secure_storage wrapper for the TMDB key
 ├── providers/               # Riverpod providers (code-gen)
-│   ├── tmdb_provider.dart   # Movie/TV browse data providers
-│   ├── tmdb_provider.g.dart # Generated code
-│   ├── library_provider.dart # User library state
+│   ├── api_key_provider.dart   # Resolves stored key vs. --dart-define
+│   ├── api_key_provider.g.dart
+│   ├── tmdb_provider.dart      # Browse / search / detail / genre providers
+│   ├── tmdb_provider.g.dart
+│   ├── library_provider.dart   # Library streams, filters, CRUD notifiers
 │   └── library_provider.g.dart
 ├── screens/
+│   ├── shell_screen.dart           # Bottom-nav shell (Browse / Library / Settings)
 │   ├── browse/
-│   │   ├── browse_screen.dart      # Main browse screen with tabs
-│   │   ├── movies_browse_tab.dart  # Movie browse & search
-│   │   └── tv_browse_tab.dart      # TV show browse & search
+│   │   ├── browse_screen.dart      # TabBar wrapper (Movies / TV)
+│   │   ├── movies_browse_tab.dart  # Movie trending + top-rated + search
+│   │   └── tv_browse_tab.dart      # TV trending + top-rated + search
 │   ├── library/
-│   │   ├── library_screen.dart     # Main library view
-│   │   ├── library_filter.dart     # Filter controls
-│   │   └── detail_screen.dart      # Movie/TV detail view
+│   │   ├── library_screen.dart     # TabBar wrapper + filter button
+│   │   ├── movies_library_tab.dart
+│   │   └── tv_library_tab.dart
+│   ├── detail/
+│   │   ├── movie_detail_screen.dart
+│   │   └── show_detail_screen.dart
 │   └── settings/
-│       └── settings_screen.dart    # App settings
+│       └── settings_screen.dart    # TMDB key entry + key-source readout
 ├── utils/
 │   └── genre_colors.dart   # TMDB genre ID → chip background/foreground palette
 └── widgets/
@@ -137,26 +145,21 @@ lib/
 Two main Drift tables with type converters for enums:
 
 **TrackedMovies**
-- `id` (INTEGER PRIMARY KEY)
-- `tmdbId` (INTEGER)
+- `id` (INTEGER PRIMARY KEY, autoincrement)
+- `tmdbId` (INTEGER, unique)
 - `title` (TEXT)
-- `posterPath` (TEXT)
-- `backdropPath` (TEXT)
-- `watchStatus` (TEXT - enum: YET_TO_WATCH, IN_PROGRESS, WATCHED)
-- `rating` (TEXT - enum: A-F)
-- `dateAdded` (DATETIME)
+- `posterPath` (TEXT, nullable) — path portion only, no base URL
+- `genres` (TEXT, JSON list — e.g. `["Action","Drama"]`)
+- `status` (TEXT — `WatchStatus` enum: `yetToWatch`, `inProgress`, `watched`)
+- `rating` (TEXT, nullable — `LetterRating` enum: `a`, `b`, `c`, `d`, `f`)
+- `watchedOn` (DATETIME, nullable)
+- `addedAt` (DATETIME, defaults to now)
 
-**TrackedShows**
-- `id` (INTEGER PRIMARY KEY)
-- `tmdbId` (INTEGER)
-- `title` (TEXT)
-- `posterPath` (TEXT)
-- `backdropPath` (TEXT)
-- `watchStatus` (TEXT - enum)
-- `rating` (TEXT - enum)
-- `currentSeason` (INTEGER)
-- `currentEpisode` (INTEGER)
-- `dateAdded` (DATETIME)
+**TrackedShows** — same columns as `TrackedMovies` plus:
+- `currentSeason` (INTEGER, nullable) — "In Progress" tracking
+- `currentEpisode` (INTEGER, nullable) — "In Progress" tracking
+
+Enum values are stored as their Dart `.name` strings via the converters in `lib/database/converters.dart`. Backdrop images are fetched on demand from TMDB on the detail screen, not persisted.
 
 ## TMDB API Integration
 
@@ -255,10 +258,14 @@ See `drift_schemas/README.md` for more detail.
 - **New screens**: Create under `screens/` and add routing in `app.dart`
 
 ### Testing
-Currently, the project has no automated tests. Consider adding:
-- Unit tests for TMDB service using `mockito`
-- Widget tests for screens and components
-- Database tests for Drift operations
+The `test/` directory exists but currently holds placeholders:
+- `test/widget_test.dart` — placeholder asserting `true`. Replace with real widget tests as screens stabilize.
+- `test/migration_test.dart` — empty `main()` plus a commented template showing how to verify a Drift schema upgrade once a v2 snapshot exists. See `drift_schemas/README.md`.
+
+Things worth filling in next:
+- Unit tests for `TmdbService` (Dio + `TmdbError.fromDio` mapping) using `mockito` or `http_mock_adapter`.
+- Widget tests for the empty / error / loaded states of the browse and library screens.
+- Drift migration tests as soon as `schemaVersion` moves past 1.
 
 ## Key Files to Know
 
@@ -327,7 +334,19 @@ Currently, the project has no automated tests. Consider adding:
 
 "1.0" here means *shippable to a non-developer who isn't you* — they can install, enter their TMDB key, and use the app without seeing raw exceptions or breaking on update. Ordered by priority:
 
-**Ship-blockers**
+**Ship-blockers (done in source — pending manual smoke-test)**
 
-- [x] **In-app TMDB API key entry.** ~~Right now the key only flows in via `--dart-define`, which means a non-developer literally cannot use the app.~~ Done — Settings now persists a stored key via `flutter_secure_storage` and falls back to `--dart-define` if no key is stored.
-- [x] **TMDB error handling.** ~~`TmdbService` doesn't wrap Dio. Riverpod catches the exception so the app doesn't crash, but detail/browse screens show raw `DioException [bad response]` strings.~~ Done — `TmdbServic
+- [x] **In-app TMDB API key entry.** Settings persists a stored key via `flutter_secure_storage` and falls back to `--dart-define` if none is stored. The status row tells the user which source the active key came from.
+- [x] **TMDB error handling.** `TmdbService` wraps every Dio call and rethrows a typed `TmdbError` (missing key, invalid key, no network, timeout, 404, 429, 5xx, malformed). The `ErrorView` widget renders `userMessage` and shows Retry / Open Settings CTAs depending on `isRetryable` and the concrete subtype.
+- [x] **Drift migration scaffolding.** `MigrationStrategy.onUpgrade` is wired up, `schemaVersion` is at 1, the v1 baseline is captured in `drift_schemas/drift_schema_v1.json`, and `test/migration_test.dart` has a copy-pasteable template for the first real migration.
+- [x] **Empty states.** Browse rows, search results, and the library tabs all use the shared `EmptyState` widget instead of returning a blank `SizedBox`.
+- [x] **`url_launcher` wiring.** Detail screens can deep-link out to TMDB.
+- [x] **Color-coded genre chips.** Up to three chips per card, colors driven by `lib/utils/genre_colors.dart`, names resolved via `movieGenresProvider` / `tvGenresProvider`.
+
+**Pending before 1.0**
+
+- [ ] Manual smoke-test pass on Windows with a real TMDB key. The checklist lives in the *Pick Up Here* section near the top of this file. Once green, that section and this bullet can both come out.
+
+**Next**
+
+- Once 1.0 is signed off: real automated tests (see `Testing` above), then expand discovery (per-genre browse, watchlists, recommendations).

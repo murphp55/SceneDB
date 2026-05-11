@@ -14,13 +14,16 @@ flutter pub get
 dart run build_runner build --delete-conflicting-outputs
 
 # 3. Get a TMDB API key from https://www.themoviedb.org/settings/api
-#    The key is passed at run/build time via --dart-define and never checked in.
+#    Either paste it into the Settings screen on first launch (persisted via
+#    flutter_secure_storage, preferred for end users) OR bake it in at build
+#    time via --dart-define. The stored key wins if both are present.
 
 # 4. Run
-flutter run --dart-define=TMDB_API_KEY=your_key_here
+flutter run                                          # then enter key in Settings
+flutter run --dart-define=TMDB_API_KEY=your_key_here # or bake it in
 ```
 
-> **Note:** `database.g.dart`, `library_provider.g.dart`, and `tmdb_provider.g.dart` are all generated files. They do not exist in source control. Always run `build_runner` before running or analyzing the app.
+> **Note:** `database.g.dart`, `api_key_provider.g.dart`, `library_provider.g.dart`, and `tmdb_provider.g.dart` are generated. They are currently checked into source control (no `.g.dart` entry in `.gitignore`), but they must still be regenerated with `build_runner` whenever you change a `@riverpod` annotation or a Drift table — the committed copies will be stale otherwise.
 
 ---
 
@@ -58,11 +61,15 @@ lib/
 │   ├── database.g.dart            # GENERATED — do not edit
 │   └── converters.dart            # TypeConverter: WatchStatus, LetterRating, List<String>
 ├── services/
-│   └── tmdb_service.dart          # All TMDB API calls via Dio
+│   ├── tmdb_service.dart          # All TMDB API calls via Dio
+│   ├── tmdb_error.dart            # Sealed TmdbError hierarchy + DioException → TmdbError mapping
+│   └── api_key_service.dart       # flutter_secure_storage wrapper for the TMDB key
 ├── providers/
+│   ├── api_key_provider.dart      # ApiKey notifier: stored vs --dart-define vs none
+│   ├── api_key_provider.g.dart    # GENERATED
 │   ├── library_provider.dart      # Library streams, filters, CRUD notifiers
 │   ├── library_provider.g.dart    # GENERATED
-│   ├── tmdb_provider.dart         # TMDB data providers + search query notifiers
+│   ├── tmdb_provider.dart         # TMDB data providers + search query notifiers + genres
 │   └── tmdb_provider.g.dart       # GENERATED
 ├── screens/
 │   ├── shell_screen.dart          # Bottom NavigationBar shell (Browse / Library / Settings)
@@ -75,19 +82,24 @@ lib/
 │   │   ├── movies_library_tab.dart
 │   │   └── tv_library_tab.dart
 │   ├── settings/
-│   │   └── settings_screen.dart
+│   │   └── settings_screen.dart   # TMDB API key entry + key-source readout
 │   └── detail/
 │       ├── movie_detail_screen.dart  # Poster, metadata, add/edit library entry
 │       └── show_detail_screen.dart   # Same + season/episode progress
+├── utils/
+│   └── genre_colors.dart          # Genre id → chip background/foreground palette
 └── widgets/
     ├── title_card.dart            # Poster card used in all grid/row views
     ├── status_chip.dart           # Colored chip for WatchStatus
     ├── rating_chip.dart           # Chip for LetterRating (A–F)
-    ├── genre_chip.dart            # Chip for a genre string
-    ├── search_bar_widget.dart     # Debounced search field (300ms)
+    ├── genre_chip.dart            # Single-genre selectable chip (used in filter sheet)
+    ├── genre_chip_row.dart        # Resolves genre IDs → names + colors (browse/search cards)
+    ├── search_bar_widget.dart     # Debounced search field (500ms — see AppConstants.searchDebounce)
     ├── trending_row.dart          # Horizontal scrolling row of TitleCards
     ├── filter_sheet.dart          # Bottom sheet: filter by status/rating/genre
-    └── add_to_library_sheet.dart  # Bottom sheet: add/edit a library entry
+    ├── add_to_library_sheet.dart  # Bottom sheet: add/edit a library entry
+    ├── empty_state.dart           # Shared empty-state placeholder
+    └── error_view.dart            # Renders TmdbError with Retry / Open Settings CTAs
 ```
 
 ---
@@ -159,13 +171,16 @@ All providers use `@riverpod` annotation (code-gen style). Generated files end i
 | Provider                     | Type                        | Source              |
 |------------------------------|-----------------------------|---------------------|
 | `databaseProvider`           | `Provider<AppDatabase>`     | Overridden in main  |
-| `tmdbServiceProvider`        | `Provider<TmdbService>`     | Auto-created        |
+| `apiKeyProvider`             | `AsyncNotifier<ApiKeyState>`| `secure_storage` → `--dart-define` → none |
+| `tmdbServiceProvider`        | `Provider<TmdbService>`     | Rebuilds when `apiKeyProvider` changes; all downstream providers re-fetch |
 | `trendingMoviesProvider`     | `FutureProvider<List<TmdbMovie>>` | TMDB API      |
 | `topRatedMoviesProvider`     | `FutureProvider<List<TmdbMovie>>` | TMDB API      |
 | `trendingTvProvider`         | `FutureProvider<List<TmdbTv>>`    | TMDB API      |
 | `topRatedTvProvider`         | `FutureProvider<List<TmdbTv>>`    | TMDB API      |
 | `movieDetailProvider(id)`    | `FutureProvider<TmdbMovie>` | TMDB API            |
 | `tvDetailProvider(id)`       | `FutureProvider<TmdbTv>`    | TMDB API            |
+| `movieGenresProvider`        | `FutureProvider<List<TmdbGenre>>` | TMDB API — cached genre list used to render chips |
+| `tvGenresProvider`           | `FutureProvider<List<TmdbGenre>>` | TMDB API — same for TV |
 | `movieSearchQueryProvider`   | `Notifier<String>`          | UI-driven           |
 | `tvSearchQueryProvider`      | `Notifier<String>`          | UI-driven           |
 | `movieSearchResultsProvider` | `FutureProvider<List<TmdbMovie>>` | TMDB API      |
@@ -221,9 +236,15 @@ Base URL: `https://api.themoviedb.org/3`
 Image URL: `https://image.tmdb.org/t/p/w500{posterPath}`
 Backdrop URL: `https://image.tmdb.org/t/p/w1280{backdropPath}`
 
-API key is read from the `TMDB_API_KEY` Dart environment variable (via `String.fromEnvironment` in `TmdbConfig.apiKey`) and must be passed as `--dart-define=TMDB_API_KEY=...` at run/build time. `TmdbConfig.hasApiKey` returns whether it was supplied. `TmdbService` sends it as the `api_key` query parameter on every request.
+The API key is resolved at runtime by `apiKeyProvider`:
 
-All calls are in `lib/services/tmdb_service.dart` and use `Dio`. Responses are mapped to the model classes in `lib/models/`.
+1. **Stored key** (preferred) — entered via the Settings screen, persisted with `flutter_secure_storage` under the `tmdb_api_key` entry. See `lib/services/api_key_service.dart`.
+2. **`--dart-define=TMDB_API_KEY=...`** (fallback) — surfaced through `TmdbConfig.dartDefineApiKey` in `lib/constants/tmdb_constants.dart`. Useful for dev/CI.
+3. **None** — `ApiKeyState.source == ApiKeySource.none`. Every TMDB call will throw `TmdbMissingKeyError`; the `ErrorView` renders an "Open Settings" CTA.
+
+`tmdbServiceProvider` watches `apiKeyProvider`, so saving or clearing the stored key automatically invalidates every TMDB-dependent provider and triggers a refetch with the new (or empty) key. `TmdbService` sends the key as the `api_key` query parameter on every request.
+
+All HTTP calls are in `lib/services/tmdb_service.dart` (using `Dio`). Errors are translated into the typed `TmdbError` hierarchy in `lib/services/tmdb_error.dart` — UI code should match on subtypes or read `userMessage` / `isRetryable` instead of catching raw `DioException`s.
 
 ---
 
