@@ -108,4 +108,14 @@ class TvBrowseTab extends ConsumerWidget {
         final show = results[index];
         return TitleCard(
           title: show.name,
-        
+          posterPath: show.posterPath,
+          onTap: () => context.push('/show/${show.id}'),
+          width: double.infinity,
+          height: 140,
+          genreIds: show.genreIds,
+          isTv: true,
+        );
+      },
+    );
+  }
+}

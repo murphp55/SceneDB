@@ -150,4 +150,28 @@ class TrendingRowBuilder {
     required List<
             ({
               String name,
-        
+              String? posterPath,
+              VoidCallback? onTap,
+              List<int>? genreIds
+            })>
+        items,
+    required bool isLoading,
+    Object? error,
+    required bool isTv,
+  }) {
+    return TrendingRow(
+      title: title,
+      isLoading: isLoading,
+      error: error,
+      items: items
+          .map((e) => TrendingItem(
+                title: e.name,
+                posterPath: e.posterPath,
+                onTap: e.onTap,
+                genreIds: e.genreIds,
+                isTv: isTv,
+              ))
+          .toList(),
+    );
+  }
+}

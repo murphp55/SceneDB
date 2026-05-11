@@ -8,8 +8,9 @@ class ShellScreen extends StatelessWidget {
 
   static int _locationToIndex(String location) {
     if (location.startsWith('/browse')) return 0;
-    if (location.startsWith('/library')) return 1;
-    if (location.startsWith('/settings')) return 2;
+    if (location.startsWith('/watchlist')) return 1;
+    if (location.startsWith('/library')) return 2;
+    if (location.startsWith('/settings')) return 3;
     return 0;
   }
 
@@ -27,8 +28,10 @@ class ShellScreen extends StatelessWidget {
             case 0:
               context.go('/browse/movies');
             case 1:
-              context.go('/library/movies');
+              context.go('/watchlist/movies');
             case 2:
+              context.go('/library/movies');
+            case 3:
               context.go('/settings');
           }
         },
@@ -37,6 +40,11 @@ class ShellScreen extends StatelessWidget {
             icon: Icon(Icons.explore_outlined),
             selectedIcon: Icon(Icons.explore),
             label: 'Browse',
+          ),
+          NavigationDestination(
+            icon: Icon(Icons.bookmark_border),
+            selectedIcon: Icon(Icons.bookmark),
+            label: 'Watchlist',
           ),
           NavigationDestination(
             icon: Icon(Icons.video_library_outlined),

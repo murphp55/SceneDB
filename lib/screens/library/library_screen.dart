@@ -4,6 +4,7 @@ import 'package:go_router/go_router.dart';
 
 import '../../providers/library_provider.dart';
 import '../../widgets/filter_sheet.dart';
+import 'library_view_mode.dart';
 import 'movies_library_tab.dart';
 import 'tv_library_tab.dart';
 
@@ -19,6 +20,7 @@ class LibraryScreen extends ConsumerStatefulWidget {
 class _LibraryScreenState extends ConsumerState<LibraryScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  LibraryViewMode _viewMode = LibraryViewMode.grid;
 
   @override
   void initState() {
@@ -85,17 +87,33 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
     );
   }
 
+  void _toggleViewMode() {
+    setState(() {
+      _viewMode = _viewMode == LibraryViewMode.grid
+          ? LibraryViewMode.tier
+          : LibraryViewMode.grid;
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final movieFilter = ref.watch(movieLibraryFilterProvider);
     final showFilter = ref.watch(showLibraryFilterProvider);
     final filterActive =
         _isMoviesTab ? movieFilter.isActive : showFilter.isActive;
+    final isTierView = _viewMode == LibraryViewMode.tier;
 
     return Scaffold(
       appBar: AppBar(
         title: const Text('My Library'),
         actions: [
+          IconButton(
+            tooltip: isTierView ? 'Switch to grid view' : 'Switch to tier list',
+            icon: Icon(isTierView
+                ? Icons.grid_view_rounded
+                : Icons.format_list_bulleted_rounded),
+            onPressed: _toggleViewMode,
+          ),
           IconButton(
             icon: Badge(
               isLabelVisible: filterActive,
@@ -115,9 +133,9 @@ class _LibraryScreenState extends ConsumerState<LibraryScreen>
       ),
       body: TabBarView(
         controller: _tabController,
-        children: const [
-          MoviesLibraryTab(),
-          TvLibraryTab(),
+        children: [
+          MoviesLibraryTab(viewMode: _viewMode),
+          TvLibraryTab(viewMode: _viewMode),
         ],
       ),
     );

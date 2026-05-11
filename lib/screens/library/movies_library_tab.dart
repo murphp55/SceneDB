@@ -3,14 +3,18 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/app_constants.dart';
+import '../../models/enums.dart';
 import '../../providers/library_provider.dart';
 import '../../widgets/empty_state.dart';
-import '../../widgets/rating_chip.dart';
 import '../../widgets/status_chip.dart';
 import '../../widgets/title_card.dart';
+import 'library_view_mode.dart';
+import 'tier_list_view.dart';
 
 class MoviesLibraryTab extends ConsumerWidget {
-  const MoviesLibraryTab({super.key});
+  const MoviesLibraryTab({super.key, this.viewMode = LibraryViewMode.grid});
+
+  final LibraryViewMode viewMode;
 
   @override
   Widget build(BuildContext context, WidgetRef ref) {
@@ -44,6 +48,27 @@ class MoviesLibraryTab extends ConsumerWidget {
             onAction: () => context.go('/browse/movies'),
           );
         }
+
+        if (viewMode == LibraryViewMode.tier) {
+          final items = movies
+              .map((m) => TierListItem(
+                    id: m.tmdbId,
+                    title: m.title,
+                    posterPath: m.posterPath,
+                    status: m.status,
+                    rating: m.rating,
+                    onTap: () => context.push('/movie/${m.tmdbId}'),
+                  ))
+              .toList();
+          return TierListView(
+            items: items,
+            emptyIcon: Icons.emoji_events_outlined,
+            emptyTitle: 'No watched movies yet.',
+            emptyBody:
+                'Mark movies as watched and give them an A–F rating to build your tier list.',
+          );
+        }
+
         return GridView.builder(
           padding: const EdgeInsets.all(AppConstants.defaultPadding),
           gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
@@ -80,12 +105,15 @@ class _MovieLibraryCard extends StatelessWidget {
 
   final String title;
   final String? posterPath;
-  final dynamic status;
-  final dynamic rating;
+  final WatchStatus status;
+  final LetterRating? rating;
   final VoidCallback onTap;
 
   @override
   Widget build(BuildContext context) {
+    // Tier badge is only shown on watched items — that's the only state where
+    // a tier ranking is meaningful.
+    final showTier = status == WatchStatus.watched && rating != null;
     return GestureDetector(
       onTap: onTap,
       child: Column(
@@ -96,16 +124,12 @@ class _MovieLibraryCard extends StatelessWidget {
             posterPath: posterPath,
             width: double.infinity,
             height: 130,
+            tier: showTier ? rating : null,
           ),
           const SizedBox(height: 4),
           StatusChip(status: status),
-          if (rating != null) ...[
-            const SizedBox(height: 2),
-            RatingChip(rating: rating),
-          ],
         ],
       ),
     );
   }
 }
-

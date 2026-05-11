@@ -9,6 +9,7 @@ import 'screens/library/library_screen.dart';
 import 'screens/settings/settings_screen.dart';
 import 'screens/detail/movie_detail_screen.dart';
 import 'screens/detail/show_detail_screen.dart';
+import 'screens/watchlist/watchlist_screen.dart';
 
 // ---------------------------------------------------------------------------
 // Router
@@ -36,6 +37,18 @@ final routerProvider = Provider<GoRouter>((ref) {
             path: '/browse/tv',
             pageBuilder: (context, state) => const NoTransitionPage(
               child: BrowseScreen(initialTab: 1),
+            ),
+          ),
+          GoRoute(
+            path: '/watchlist/movies',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: WatchlistScreen(initialTab: 0),
+            ),
+          ),
+          GoRoute(
+            path: '/watchlist/tv',
+            pageBuilder: (context, state) => const NoTransitionPage(
+              child: WatchlistScreen(initialTab: 1),
             ),
           ),
           GoRoute(

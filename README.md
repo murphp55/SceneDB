@@ -330,4 +330,37 @@ Currently, the project has no automated tests. Consider adding:
 **Ship-blockers**
 
 - [x] **In-app TMDB API key entry.** ~~Right now the key only flows in via `--dart-define`, which means a non-developer literally cannot use the app.~~ Done — Settings now persists a stored key via `flutter_secure_storage` and falls back to `--dart-define` if no key is stored.
-- [x] **TMDB error handling.** ~~`TmdbService` doesn't wrap Dio. Riverpod catches the exception so the app doesn't crash, but detail/browse screens show raw `DioException [bad response]` strings.~~ Done — `TmdbServic
+- [x] **TMDB error handling.** ~~`TmdbService` doesn't wrap Dio. Riverpod catches the exception so the app doesn't crash, but detail/browse screens show raw `DioException [bad response]` strings.~~ Done — `TmdbService` now throws a sealed `TmdbError` hierarchy (missing/invalid key, no network, timeout, 404, 429, 5xx, malformed JSON). Detail screens use `ErrorView` with a Retry button (or "Open Settings" for key problems). Browse rows and search use the same widget.
+- [x] **Schema migration strategy.** ~~`schemaVersion` is 1 with no `MigrationStrategy`. Adding any column will brick existing user data.~~ Done — `AppDatabase` now defines a `MigrationStrategy` (with `onCreate`, `onUpgrade`, and `beforeOpen` enabling FK enforcement). Schema dump workflow documented in `drift_schemas/README.md`. First-time baseline still needs `dart run drift_dev schema dump …` to capture v1 — see Development Notes.
+
+**Polish**
+
+- [x] Wire `url_launcher` so the Settings "Get a TMDB API Key" row actually opens the browser.
+- [x] Empty states for the Library tabs and search results — done. Library tabs now distinguish "empty library" (with a "Browse" CTA) from "filters hide everything" (with a "Clear filters" CTA). Search shows a styled `EmptyState` instead of a bare `Text`.
+- [x] ~~Verify whether the genre names on detail screens are actually missing.~~ Investigated — they are not. `genreNames` is only read on detail screens, which fetch `/movie/{id}` and `/tv/{id}`, both of which return full `genres` arrays. The original claim was incorrect; no fix needed.
+
+**Tests**
+
+Decision: 1.0 is a personal-use build. Manual smoke-testing the critical paths is enough — no automated test suite required. If the project later opens up to other users, revisit this and add coverage for `TmdbService` (mocked Dio across the error paths), filter logic in `library_provider.dart`, and at least one widget test for the library grid.
+
+## Nice-to-have (beyond 1.0)
+
+- [ ] Light-mode option and theme toggle (most media apps stay dark-only by design — defer unless requested)
+- [ ] TV progress validation against the show's actual season/episode counts
+- [ ] User authentication and cloud sync
+- [ ] Watch list sharing with friends
+- [ ] Personalized recommendations
+- [ ] Offline support for cached content
+- [ ] Analytics and insights
+- [ ] IMDb integration
+
+## For AI Assistants
+
+When opening this project in a new session:
+1. The database is Drift-based SQLite; schema in `lib/database/database.dart`
+2. All state is managed via Riverpod; providers in `lib/providers/`
+3. TMDB API key is provided via `--dart-define=TMDB_API_KEY=...`; read through `TmdbConfig.apiKey` / `TmdbConfig.hasApiKey`
+4. Code generation is required; run `dart run build_runner build` if files are modified
+5. Material Design 3 is the design system; check `lib/app.dart` for theme setup
+6. The app uses GoRouter for navigation; check routing in `lib/app.dart`
+7. Early MVP with no automated tests yet — see the "Roadmap to 1.0" section for the remaining punch list

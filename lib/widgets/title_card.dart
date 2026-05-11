@@ -3,7 +3,9 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/tmdb_constants.dart';
+import '../models/enums.dart';
 import 'genre_chip_row.dart';
+import 'tier_badge.dart';
 
 class TitleCard extends StatelessWidget {
   const TitleCard({
@@ -15,6 +17,7 @@ class TitleCard extends StatelessWidget {
     this.height = 180,
     this.genreIds,
     this.isTv = false,
+    this.tier,
   });
 
   final String title;
@@ -31,6 +34,11 @@ class TitleCard extends StatelessWidget {
   /// consulted for names). Ignored when [genreIds] is null/empty.
   final bool isTv;
 
+  /// Optional tier (letter rating) shown as a small badge in the poster's
+  /// top-right corner. Only pass this when the item is `watched` — that's the
+  /// only state where a tier is meaningful.
+  final LetterRating? tier;
+
   @override
   Widget build(BuildContext context) {
     final showGenres = genreIds != null && genreIds!.isNotEmpty;
@@ -46,19 +54,57 @@ class TitleCard extends StatelessWidget {
               borderRadius: const BorderRadius.all(
                 Radius.circular(AppConstants.cardBorderRadius),
               ),
-              child: posterPath != null
-                  ? CachedNetworkImage(
-                      imageUrl: '${TmdbConfig.imageBaseUrl}$posterPath',
-                      width: width,
-                      height: height,
-                      fit: BoxFit.cover,
-                      placeholder: (context, url) => _placeholder(context),
-                      errorWidget: (context, url, error) =>
-                          _placeholder(context),
-                    )
-                  : _placeholder(context),
+              child: Stack(
+                children: [
+                  posterPath != null
+                      ? CachedNetworkImage(
+                          imageUrl: '${TmdbConfig.imageBaseUrl}$posterPath',
+                          width: width,
+                          height: height,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => _placeholder(context),
+                          errorWidget: (context, url, error) =>
+                              _placeholder(context),
+                        )
+                      : _placeholder(context),
+                  if (tier != null)
+                    Positioned(
+                      top: 6,
+                      right: 6,
+                      child: TierBadge(rating: tier!),
+                    ),
+                ],
+              ),
             ),
-            const SizedBox(height: 6),
-            Text(
-              title,
-             
+            if (title.isNotEmpty) ...[
+              const SizedBox(height: 6),
+              Text(
+                title,
+                maxLines: 2,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodySmall,
+              ),
+            ],
+            if (showGenres) ...[
+              const SizedBox(height: 4),
+              GenreChipRow(
+                genreIds: genreIds!,
+                isTv: isTv,
+                maxChips: 3,
+              ),
+            ],
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: const Icon(Icons.movie, size: 40),
+    );
+  }
+}

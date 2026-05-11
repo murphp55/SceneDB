@@ -107,4 +107,14 @@ class MoviesBrowseTab extends ConsumerWidget {
       itemBuilder: (context, index) {
         final movie = results[index];
         return TitleCard(
-          title: movie.title,
+          title: movie.title,
+          posterPath: movie.posterPath,
+          onTap: () => context.push('/movie/${movie.id}'),
+          width: double.infinity,
+          height: 140,
+          genreIds: movie.genreIds,
+        );
+      },
+    );
+  }
+}
