@@ -3,6 +3,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 
 import '../../constants/app_constants.dart';
+import '../../models/tmdb_movie.dart';
 import '../../providers/tmdb_provider.dart';
 import '../../widgets/search_bar_widget.dart';
 import '../../widgets/title_card.dart';
@@ -34,8 +35,11 @@ class MoviesBrowseTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildDiscovery(BuildContext context, AsyncValue trendingAsync,
-      AsyncValue topRatedAsync) {
+  Widget _buildDiscovery(
+    BuildContext context,
+    AsyncValue<List<TmdbMovie>> trendingAsync,
+    AsyncValue<List<TmdbMovie>> topRatedAsync,
+  ) {
     return ListView(
       children: [
         TrendingRowBuilder.movies(
@@ -69,7 +73,10 @@ class MoviesBrowseTab extends ConsumerWidget {
     );
   }
 
-  Widget _buildSearchResults(BuildContext context, AsyncValue searchAsync) {
+  Widget _buildSearchResults(
+    BuildContext context,
+    AsyncValue<List<TmdbMovie>> searchAsync,
+  ) {
     if (searchAsync.isLoading) {
       return const Center(child: CircularProgressIndicator());
     }
