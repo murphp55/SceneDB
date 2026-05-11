@@ -3,7 +3,6 @@ import 'package:flutter/material.dart';
 
 import '../constants/app_constants.dart';
 import '../constants/tmdb_constants.dart';
-import 'genre_chip_row.dart';
 
 class TitleCard extends StatelessWidget {
   const TitleCard({
@@ -13,8 +12,6 @@ class TitleCard extends StatelessWidget {
     this.onTap,
     this.width = 120,
     this.height = 180,
-    this.genreIds,
-    this.isTv = false,
   });
 
   final String title;
@@ -23,18 +20,8 @@ class TitleCard extends StatelessWidget {
   final double width;
   final double height;
 
-  /// Optional TMDB genre IDs. When provided (and non-empty), renders a row of
-  /// colored genre chips below the title. Names are looked up via Riverpod.
-  final List<int>? genreIds;
-
-  /// Whether this card represents a TV show (drives which genres provider is
-  /// consulted for names). Ignored when [genreIds] is null/empty.
-  final bool isTv;
-
   @override
   Widget build(BuildContext context) {
-    final showGenres = genreIds != null && genreIds!.isNotEmpty;
-
     return GestureDetector(
       onTap: onTap,
       child: SizedBox(
@@ -61,4 +48,22 @@ class TitleCard extends StatelessWidget {
             const SizedBox(height: 6),
             Text(
               title,
-             
+              maxLines: 2,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.bodySmall,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _placeholder(BuildContext context) {
+    return Container(
+      width: width,
+      height: height,
+      color: Theme.of(context).colorScheme.surfaceContainerHighest,
+      child: const Icon(Icons.movie, size: 40),
+    );
+  }
+}
